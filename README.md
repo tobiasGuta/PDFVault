@@ -57,3 +57,91 @@ IP - - [05/Nov/2025 11:25:54] "GET / HTTP/1.1" 200 -
 [UPLOAD] Clean file saved to: uploads/1738421237842.pdf
 [Thumbnail] Saved thumbnail to: thumbnails/1738421237842.png
 ```
+
+### **1\. Upload**
+
+-   You select a PDF and upload it via the web form.
+
+-   The file is first **saved temporarily** in a secure temp folder, so nothing is immediately moved into the main storage.
+
+-   The app logs the filename and the temporary path in the terminal.
+
+* * * * *
+
+### **2\. MIME type check**
+
+-   PDFVault uses `python-magic` to detect the **true file type**.
+
+-   If the file isn't a PDF (`application/pdf`), it's **rejected immediately**.
+
+-   This prevents attackers from uploading disguised malware like `.exe` or `.js` files renamed as `.pdf`.
+
+* * * * *
+
+### **3\. ClamAV scan**
+
+-   The temporary PDF is scanned with **ClamAV**, a popular antivirus tool.
+
+-   It runs a **full virus scan** and logs the process in real-time to your terminal.
+
+-   If ClamAV finds malware, the file is **rejected**.
+
+-   If clean, it moves to the next step.
+
+* * * * *
+
+### **4\. Static PDF inspection**
+
+-   Using `pikepdf`, PDFVault inspects the PDF's internal objects.
+
+-   It looks for **embedded JavaScript**, `/JS` objects, or `/JavaScript` actions.
+
+-   JavaScript in PDFs is a common way attackers try to exploit readers.
+
+-   If suspicious scripts are detected, the PDF is **rejected**.
+
+* * * * *
+
+### **5\. Embedded attachments check**
+
+-   PDFVault checks the PDF catalog for **embedded files** using `pikepdf`.
+
+-   Attachments can contain malware, so PDFs with embedded files are **rejected**.
+
+* * * * *
+
+### **6\. Metadata stripping**
+
+-   Using `exiftool`, PDFVault removes all **metadata**: author info, edit history, timestamps, and anything else that could leak sensitive info.
+
+-   It logs minor warnings, but continues if stripping is successful.
+
+* * * * *
+
+### **7\. PDF sanitization**
+
+-   `qpdf` is used to **sanitize and linearize the PDF**, which:
+
+    -   Fixes malformed objects
+
+    -   Ensures a standard structure
+
+    -   Removes potential hidden threats in the file structure
+
+-   If qpdf fails, the PDF is **rejected**.
+
+* * * * *
+
+### **8\. Thumbnail generation**
+
+-   After the PDF is clean, `pdf2image` converts the **first page into a PNG thumbnail**.
+
+-   This thumbnail is saved in a `thumbnails` folder and used to visually display the PDF in the web interface.
+
+* * * * *
+
+### **9\. Move to storage**
+
+-   The clean PDF is moved from the temp folder to the main `uploads` folder.
+
+-   Now it's safe to browse, download, or share.
