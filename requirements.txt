@@ -1,0 +1,4 @@
+Flask
+pikepdf
+python-magic
+pdf2image
